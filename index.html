@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MIDI CC122 Sender</title>
+</head>
+<body>
+  <h1>Send CC122 (Local Control) to Yamaha P-145</h1>
+  
+  <label for="midiOut">Select MIDI Output:</label>
+  <select id="midiOut"></select>
+
+  <br><br>
+  <button id="onBtn">Local Control ON</button>
+  <button id="offBtn">Local Control OFF</button>
+
+  <script>
+    let midiAccess;
+    let selectedOutput = null;
+
+    function populateMidiOutputs() {
+      const outputSelect = document.getElementById('midiOut');
+      outputSelect.innerHTML = '';
+
+      for (let output of midiAccess.outputs.values()) {
+        const option = document.createElement('option');
+        option.value = output.id;
+        option.textContent = output.name;
+        outputSelect.appendChild(option);
+      }
+
+      outputSelect.addEventListener('change', () => {
+        selectedOutput = midiAccess.outputs.get(outputSelect.value);
+      });
+
+      if (outputSelect.options.length > 0) {
+        outputSelect.selectedIndex = 0;
+        selectedOutput = midiAccess.outputs.get(outputSelect.value);
+      }
+    }
+
+    function sendCC122(value) {
+      if (!selectedOutput) {
+        alert('No MIDI output selected!');
+        return;
+      }
+      const channel = 0;
+      const ccNumber = 122;
+      const message = [0xB0 | channel, ccNumber, value];
+      selectedOutput.send(message);
+    }
+
+    document.getElementById('onBtn').addEventListener('click', () => {
+      sendCC122(127);
+    });
+
+    document.getElementById('offBtn').addEventListener('click', () => {
+      sendCC122(0);
+    });
+
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess().then((access) => {
+        midiAccess = access;
+        populateMidiOutputs();
+      }, () => {
+        alert('Failed to access Web MIDI.');
+      });
+    } else {
+      alert('Web MIDI not supported in this browser.');
+    }
+  </script>
+</body>
+</html>
